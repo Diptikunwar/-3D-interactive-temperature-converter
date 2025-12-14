@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Temperature Converter</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ================= RESET ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Inter, system-ui, sans-serif;
+        }
+
+        /* ================= DYNAMIC BACKGROUND ================= */
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 50% 50%, #60a5fa, #020617 55%),
+                linear-gradient(135deg, #020617, #020617);
+            transition: background 0.15s linear;
+            overflow: hidden;
+        }
+
+        /* ================= 3D SCENE ================= */
+        .scene {
+            perspective: 1500px;
+        }
+
+        /* ================= GLASS CARD ================= */
+        .card {
+            width: 440px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(18px);
+            border-radius: 32px;
+            padding: 36px;
+            box-shadow:
+                0 50px 90px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transform-style: preserve-3d;
+            transition: transform 0.12s ease;
+        }
+
+        /* ================= HEADER ================= */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            transform: translateZ(60px);
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #555;
+            margin-top: 6px;
+        }
+
+        /* ================= INPUT ================= */
+        .field {
+            margin-bottom: 20px;
+            transform: translateZ(40px);
+        }
+
+        label {
+            font-size: 13px;
+            color: #555;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 14px;
+            margin-top: 6px;
+            border-radius: 16px;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+            outline: none;
+        }
+
+        /* ================= RANGE ================= */
+        .range {
+            margin-top: 10px;
+        }
+
+        /* ================= ROW ================= */
+        .row {
+            display: flex;
+            gap: 14px;
+        }
+
+        /* ================= RESULT ================= */
+        .result {
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            font-size: 26px;
+            text-align: center;
+            font-weight: 700;
+            transform: translateZ(80px);
+        }
+
+        /* ================= HISTORY ================= */
+        .history {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #222;
+            max-height: 100px;
+            overflow: auto;
+        }
+
+        /* ================= SCROLLBAR ================= */
+        .history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history::-webkit-scrollbar-thumb {
+            background: #cbd5f5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="scene">
+        <div class="card" id="card">
+
+            <div class="header">
+                <h1>Temperature Converter</h1>
+                <p>3D Interactive Conversion Tool</p>
+            </div>
+
+            <div class="field">
+                <label>Temperature</label>
+                <input type="number" id="temp" value="25">
+                <input type="range" class="range" min="-150" max="600" value="25" oninput="syncRange(this.value)">
+            </div>
+
+            <div class="row field">
+                <div style="flex:1">
+                    <label>From</label>
+                    <select id="from">
+                        <option value="c">Celsius °C</option>
+                        <option value="f">Fahrenheit °F</option>
+                        <option value="k">Kelvin K</option>
+                    </select>
+                </div>
+                <div style="flex:1">
+                    <label>To</label>
+                    <select id="to">
+                        <option value="f">Fahrenheit °F</option>
+                        <option value="c">Celsius °C</option>
+                        <option value="k">Kelvin K</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="result" id="result">77.00 °F</div>
+            <div class="history" id="history"></div>
+
+        </div>
+    </div>
+
+    <script>
+        /* ================= 3D TILT + STRONG BACKGROUND DYNAMICS ================= */
+        const card = document.getElementById("card");
+
+        document.addEventListener("mousemove", e => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            /* 3D tilt */
+            const rotateY = (0.5 - x) * 24;
+            const rotateX = (y - 0.5) * 24;
+            card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
+
+            /* STRONG color interpolation */
+            const r1 = Math.floor(60 + x * 195);    // 60 → 255
+            const g1 = Math.floor(90 + y * 140);    // 90 → 230
+            const b1 = Math.floor(255 - x * 200);   // 255 → 55
+
+            const r2 = Math.floor(10 + y * 90);
+            const g2 = Math.floor(20 + x * 130);
+            const b2 = Math.floor(80 + (1 - y) * 175);
+
+            document.body.style.background = `
+    radial-gradient(
+      circle at ${x * 100}% ${y * 100}%,
+      rgb(${r1},${g1},${b1}),
+      rgb(${r2},${g2},${b2}) 55%
+    ),
+    linear-gradient(135deg,#020617,#020617)
+  `;
+        });
+
+        /* ================= CONVERSION LOGIC ================= */
+        const tempInput = document.getElementById("temp");
+        const from = document.getElementById("from");
+        const to = document.getElementById("to");
+        const result = document.getElementById("result");
+        const history = document.getElementById("history");
+
+        function syncRange(val) {
+            tempInput.value = val;
+            convert();
+        }
+
+        [tempInput, from, to].forEach(el =>
+            el.addEventListener("input", convert)
+        );
+
+        function convert() {
+            const v = parseFloat(tempInput.value);
+            if (isNaN(v)) {
+                result.textContent = "—";
+                return;
+            }
+
+            let c;
+            if (from.value === "c") c = v;
+            if (from.value === "f") c = (v - 32) * 5 / 9;
+            if (from.value === "k") c = v - 273.15;
+
+            let out;
+            if (to.value === "c") out = c;
+            if (to.value === "f") out = c * 9 / 5 + 32;
+            if (to.value === "k") out = c + 273.15;
+
+            const map = { c: "°C", f: "°F", k: "K" };
+            result.textContent = `${out.toFixed(2)} ${map[to.value]}`;
+
+            history.innerHTML =
+                `<div>${v} ${map[from.value]} → ${out.toFixed(2)} ${map[to.value]}</div>` +
+                history.innerHTML;
+        }
+
+        convert();
+    </script>
+
+</body>
+
+</html>
